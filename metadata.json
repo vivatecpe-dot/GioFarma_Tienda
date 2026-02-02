@@ -1,0 +1,7 @@
+{
+  "name": "GIOFARMA - Tu Farmacia de Confianza",
+  "description": "Catálogo online de productos farmacéuticos con integración directa a Odoo y pedidos por WhatsApp.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
