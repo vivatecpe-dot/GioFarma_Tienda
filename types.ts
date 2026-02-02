@@ -33,6 +33,10 @@ export interface CompanyConfig {
   company_name: string;
   facebook_url?: string;
   instagram_url?: string;
+  odoo_host?: string;
+  odoo_db?: string;
+  odoo_username?: string;
+  odoo_api_key?: string;
   banners: {
     image_url: string;
     title: string;
