@@ -30,33 +30,27 @@ export const getCompanyConfig = async (): Promise<CompanyConfig> => {
 };
 
 export const syncProductsFromOdoo = async (config: Partial<CompanyConfig>): Promise<{ success: boolean; count: number }> => {
-  try {
-    // Llamada a la Edge Function que maneja el volumen masivo desde Odoo
-    const { data: syncResult, error } = await supabase.functions.invoke('odoo-sync-massive', {
-      body: { 
-        host: config.odoo_host,
-        db: config.odoo_db,
-        user: config.odoo_username,
-        api_key: config.odoo_api_key
-      }
-    });
-
-    if (error) {
-      // Simulación para propósitos de desarrollo si la función no está desplegada
-      console.log("Simulando sincronización de gran volumen...");
-      return { success: true, count: 1240 }; 
+  // Esta llamada invoca la lógica de servidor en Supabase
+  const { data, error } = await supabase.functions.invoke('odoo-sync-massive', {
+    body: { 
+      host: config.odoo_host,
+      db: config.odoo_db,
+      username: config.odoo_username,
+      password: config.odoo_api_key
     }
-    
-    return { success: true, count: syncResult.count || 0 }; 
-  } catch (error) {
-    console.error("Error en sincronización masiva:", error);
-    throw error;
+  });
+
+  if (error) {
+    console.error("Error en Edge Function:", error);
+    throw new Error("No se pudo conectar con la función de sincronización. Asegúrese de haber desplegado 'odoo-sync-massive' en Supabase.");
   }
+  
+  return { success: true, count: data?.count || 0 }; 
 };
 
 export const getProductsFromCache = async (): Promise<Product[]> => {
   try {
-    // IMPORTANTE: .range(0, 5000) permite saltar el límite de 1000 por defecto de Supabase
+    // Aumentamos el rango para soportar hasta 5000 productos
     const { data, error } = await supabase
       .from('products')
       .select('*')
@@ -82,7 +76,7 @@ export const getProductsFromCache = async (): Promise<Product[]> => {
       requires_prescription: p.requires_prescription || false
     }));
   } catch (error) {
-    console.error("Error cargando gran volumen de productos:", error);
+    console.error("Error cargando productos:", error);
     return [];
   }
 };
@@ -121,16 +115,19 @@ export const createFullOrder = async (formData: OrderFormData, cart: CartItem[])
   }
 };
 
-export const getOrdersByPhone = async (phone: string) => {
+// Se añade la función faltante para buscar pedidos por número de teléfono
+export const getOrdersByPhone = async (phone: string): Promise<any[]> => {
   try {
     const { data, error } = await supabase
       .from('orders')
       .select('*, order_items(*)')
       .eq('customer_phone', phone)
       .order('created_at', { ascending: false });
+    
     if (error) throw error;
     return data || [];
   } catch (error) {
+    console.error("Error buscando pedidos:", error);
     return [];
   }
 };
